@@ -8,7 +8,25 @@
 	font_size: 30
 
 <DisplayText@Label>
-	font_size: 40
+	font_size: 40	
+				
+<Mole>
+	canvas.before:
+		Color:
+			rgba: 0.5, 0, 0, 1
+		Rectangle:
+			source: 'Images/mole.png'
+			size: self.size
+			pos: self.pos
+	
+<StartPopUp>			
+    size_hint: .2, .2
+    auto_dismiss: False
+    title: 'Welcome'
+    Button:
+        text: 'Play'
+        on_press: root.start_click()
+        on_press: root.dismiss()   
 
 <Controller>:
     canvas.before:
@@ -20,7 +38,6 @@
        
 	BoxLayout:
 		orientation: 'vertical'
-		###Sizes the layout to the size of the root widget (the size of the screen)
 		size: root.size					
 		
 		###Contains the display labels
@@ -32,54 +49,28 @@
 				cols: 3
 				
 				DisplayText:
-					text: 'Score'
-					
+					text: 'Score'					
 				DisplayText:
-					text: 'High Score'
-					
+					text: 'High Score'					
 				DisplayText:
-					text: 'Time'		
-				          	
+					text: 'Time'						          	
 				DisplayScore:
-					text: str(root.score_label)
-					
+					text: str(root.score_label)					
 				DisplayScore:
-					text: str(root.high_score_label)
-					
+					text: str(root.high_score_label)					
 				DisplayScore: 
 					text: str(root.time_label)
 		
 		###Displays the game box
 		FloatLayout:				
-			id: layout
-			size_hint: 1, 0.85
 			canvas.before:
 		        Color:
 		            rgba: 0.702, 0.957, 0.988, 1
 		            
 		        Rectangle:
 		            pos: self.pos
-		            size: self.size
-		    
-		    ###Need this line to put the ball on the main game screen                
-		    Ball:		
-		    	        
-			Button:
-				id: Begin
-				background_normal: 'Images/play.png'
-				size_hint: 0.18, 0.18
-				text: "PLAY"
-				center: self.parent.center
-				on_press: root.restart_game()
-				on_press: self.parent.remove_widget(Begin)
-				
-				
-<Ball>
-	id: ball
-	size: 30, 30
-	Button:
-		background_normal: 'Images/mole.png'
-		background_color: 3, 1, 1, 1
-		center: root.ball_center
-		on_press: root.move()				
-	
+		            size: self.size		    	
+		    	             
+		    Mole:	
+		    	size_hint: .1, .175
+		    	pos_hint: {'center_x': .5, 'center_y': .5}	
