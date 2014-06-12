@@ -1,68 +1,77 @@
-###:kivy 1.7.2
-###Give widgets ids to allow them 
-###to be manipulated on events 
-###and in kv file and in the py file
-	
-###Creates label with common properties, so everything doesn't need retyped	
+#kivy 1.8.0
+
 <DisplayScore@Label>        
 	font_size: 30
 
 <DisplayText@Label>
 	font_size: 40	
-				
-<Mole>
-	canvas.before:
-		Color:
-			rgba: 0.5, 0, 0, 1
-		Rectangle:
-			source: 'Images/mole.png'
-			size: self.size
-			pos: self.pos
 	
-<StartPopUp>			
+<StartPopUp>
+	app: app
+				
     size_hint: .2, .2
     auto_dismiss: False
     title: 'Welcome'
     Button:
         text: 'Play'
         on_press: root.start_click()
-        on_press: root.dismiss()   
-
-<Controller>:
-    canvas.before:
-        Color:
-            rgba: 0, 0, 0, 1
-        Rectangle:
-            size: self.size
-            pos: self.pos
+        on_press: root.dismiss()  
+ 
+<DataBar>
+	app: app
+	
+	GridLayout:
+		size: root.size
+		x: 0
+		y: root.height * 4     #height is from this widget not the controller widget
+		cols: 3
+		
+		DisplayText:
+			text: 'Score'
+		DisplayText:
+			text: 'High Score'	
+		DisplayText:
+			text: 'Time'
+		
+		DisplayScore:
+			text: str(root.score_label)								          		
+		DisplayScore:
+			text: str(root.high_score_label)				
+		DisplayScore: 
+			text: str(root.time_label)         
+				
+<Mole>
+	app: app
+	
+	kvheight_size: 50
+	kvwidth_size: 40
+	
+	canvas.before:
+		Rectangle:
+			source: 'Images/mole.png'
+			size: root.kvwidth_size, root.kvheight_size
+			pos: self.pos
+			
+<MoleGame>:
+	databar: databar_obj
+	mole: mole_obj
+	gamebox: game_box_obj
+	
+	kvcenter_x: root.width/2
+	kvcenter_y: root.height/2
        
 	BoxLayout:
 		orientation: 'vertical'
-		size: root.size					
-		
+		size: root.size						
+					
 		###Contains the display labels
-		BoxLayout:							
-			orientation: 'horizontal'
-			size_hint: 1, 0.2
-			
-			GridLayout: 
-				cols: 3
-				
-				DisplayText:
-					text: 'Score'					
-				DisplayText:
-					text: 'High Score'					
-				DisplayText:
-					text: 'Time'						          	
-				DisplayScore:
-					text: str(root.score_label)					
-				DisplayScore:
-					text: str(root.high_score_label)					
-				DisplayScore: 
-					text: str(root.time_label)
-		
+		DataBar:
+			id: databar_obj	
+			size_hint: 1, .25			
+
 		###Displays the game box
-		FloatLayout:				
+		FloatLayout:	
+			id: game_box_obj			
 			canvas.before:
 		        Color:
 		            rgba: 0.702, 0.957, 0.988, 1
@@ -72,5 +81,7 @@
 		            size: self.size		    	
 		    	             
 		    Mole:	
+		    	id: mole_obj
 		    	size_hint: .1, .175
-		    	pos_hint: {'center_x': .5, 'center_y': .5}	
+		    	center_x: root.kvcenter_x
+		    	center_y: root.kvcenter_y
