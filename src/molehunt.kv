@@ -20,6 +20,13 @@
 <DataBar>
 	app: app
 	
+	canvas:
+		Color:
+        	rgba: 0.5, 0.957, 0.988, 1
+		Rectangle:
+        	pos: self.pos
+        	size: self.size	
+	
 	GridLayout:
 		size: root.size
 		x: 0
@@ -43,16 +50,16 @@
 <Mole>
 	app: app
 	
-	kvheight_size: 50
-	kvwidth_size: 40
+	kvheight: root.height
+	kvwidth: root.width
 	
 	canvas.before:
 		Rectangle:
 			source: 'Images/mole.png'
-			size: root.kvwidth_size, root.kvheight_size
 			pos: self.pos
 			
 <MoleGame>:
+	app: app
 	databar: databar_obj
 	mole: mole_obj
 	gamebox: game_box_obj
