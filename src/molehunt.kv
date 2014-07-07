@@ -1,24 +1,126 @@
 #kivy 1.8.0
 
-<DisplayScore@Label>        
-	font_size: 30
-
 <DisplayText@Label>
-	font_size: 40	
+	font_name: 'Fonts/PressStart2P.ttf'
+	bold: True
+	font_size: 20	
+
+<DisplayScore@Label> 
+	font_name: 'Fonts/PressStart2P.ttf' 
+	bold: True      
+	font_size: 15
 	
-<StartPopUp>
+<DescriptionText@Label> 
+	font_name: 'Fonts/PressStart2P.ttf' 
+	text_size: self.size
+	valign: 'middle'
+	halign: 'center'
+	bold: True      
+	font_size: 10	
+
+###Having this template gives button behaviour to Image
+###Allowing the on_press event to function	
+<Character@ButtonBehavior+Image>
+	on_press: app.startpopup.charselect.image_select(self)
+
+<TimesUp>
 	app: app
+		
+	BoxLayout:
+		orientation: 'vertical'
+		size: root.x_size, root.y_size
+		center: root.x_center, root.y_center
+		DisplayText:
+			size_hint: 1, 5
+			text: 'Times Up'
+		DisplayScore:
+			text: 'Score'	
+		DisplayScore:
+			text: str(root.app.game.databar.score_label)	
+
+<SelectBox>
+	startpopup: app.startpopup
+	
+	canvas:
+		Color:
+			rgba: 0, 0, 1, 0.3
+		Rectangle:
+			size: self.size
+			pos: self.pos
+		Rectangle:
+			source: root.img_selectbox
+			size: self.size
+			pos: self.pos	
+			
+<CharSelect>
+	startpopup: app.startpopup
+	selectbox: selectbox_obj
+	character1: character1_obj
+	
+	BoxLayout:	
+		size: root.size
+		orientation: 'horizontal'
+		padding: self.width/40
+		RelativeLayout:
+			id: character1_obj
+			###Selection Box		
+			SelectBox:	
+				id: selectbox_obj
+			Character:
+				source: root.character_lst[0]	
+		Character:
+			source: root.character_lst[1]		
+
+#The 'DASH' overides the automatic popup attributes
+<-StartPopUp>
+	app: app
+	charselect: charselect_obj
 				
-    size_hint: .2, .2
-    auto_dismiss: False
-    title: 'Welcome'
-    Button:
-        text: 'Play'
-        on_press: root.start_click()
-        on_press: root.dismiss()  
+    size_hint: root.startpopup_size
+    auto_dismiss: False  
+    			
+	BoxLayout:
+		size: root.size 
+		padding: self.width/75
+		orientation: 'vertical'	
+		canvas:
+			Rectangle:
+				source: root.img_startpopup
+				size: self.size
+				pos: self.pos
+		
+		###Title & Description	
+		BoxLayout:
+			orientation: 'vertical'	
+			DisplayText:
+				text: 'Mole Basher'	
+			DescriptionText:
+				text: 'Bash your chosen face as many times as possible in the time limit available.'		
+		
+		###Character Selection	
+		RelativeLayout:
+			CharSelect:
+				id: charselect_obj
+		
+		###Button
+		AnchorLayout:
+			size_hint: 1, 0.5
+			anchor_x: 'center'
+			anchor_y: 'center'	
+		    Button:
+		    	background_color: 0, 0, 0, 0
+		    	size_hint: 0.5, 0.9
+		    	font_name: 'Fonts/PressStart2P.ttf' 
+		        text: 'Play'
+		        on_press: root.start_click()
+		        on_press: root.dismiss()  
+
+<-TimeUpPopUp>
+	Label:
+		text: 'TIME UP'             		 
  
 <DataBar>
-	app: app
+	game: app.game
 	
 	canvas:
 		Color:
@@ -30,7 +132,7 @@
 	GridLayout:
 		size: root.size
 		x: 0
-		y: root.height * 4     #height is from this widget not the controller widget
+		y: root.height * 6     #height is from this widget not the controller widget
 		cols: 3
 		
 		DisplayText:
@@ -48,14 +150,14 @@
 			text: str(root.time_label)         
 				
 <Mole>
-	app: app
+	game: app.game
 	
 	kvheight: root.height
 	kvwidth: root.width
 	
 	canvas.before:
 		Rectangle:
-			source: 'Images/mole.png'
+			source: root.current_char
 			pos: self.pos
 			
 <MoleGame>:
@@ -74,21 +176,19 @@
 		###Contains the display labels
 		DataBar:
 			id: databar_obj	
-			size_hint: 1, .25			
+			size_hint: 1, .1667			
 
 		###Displays the game box
 		FloatLayout:	
 			id: game_box_obj			
-			canvas.before:
-		        Color:
-		            rgba: 0.702, 0.957, 0.988, 1
-		            
+			canvas:
 		        Rectangle:
+		        	source: root.img_gamebox
 		            pos: self.pos
 		            size: self.size		    	
 		    	             
 		    Mole:	
 		    	id: mole_obj
-		    	size_hint: .1, .175
+		    	size_hint: .15, .2
 		    	center_x: root.kvcenter_x
 		    	center_y: root.kvcenter_y
