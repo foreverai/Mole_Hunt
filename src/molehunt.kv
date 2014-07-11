@@ -41,33 +41,32 @@
 <SelectBox>
 	startpopup: app.startpopup
 	
-	canvas:
-		Color:
-			rgba: 0, 0, 1, 0.3
-		Rectangle:
-			size: self.size
-			pos: self.pos
-		Rectangle:
-			source: root.img_selectbox
-			size: self.size
-			pos: self.pos	
-			
+	BoxLayout:
+		center: root.x_center, root.y_center
+		size: root.x_width, root.y_height
+		canvas:
+			Rectangle:
+				source: root.img_selectbox
+				size: self.size
+				pos: self.pos	
+				
 <CharSelect>
 	startpopup: app.startpopup
 	selectbox: selectbox_obj
 	character1: character1_obj
 	
-	BoxLayout:	
+	###Selection Box		
+	SelectBox:
+		id: selectbox_obj	
+	
+	###Characters
+	GridLayout:	
 		size: root.size
-		orientation: 'horizontal'
+		cols: root.char_columns
 		padding: self.width/40
-		RelativeLayout:
+		Character:
 			id: character1_obj
-			###Selection Box		
-			SelectBox:	
-				id: selectbox_obj
-			Character:
-				source: root.character_lst[0]	
+			source: root.character_lst[0]	
 		Character:
 			source: root.character_lst[1]		
 
@@ -113,61 +112,50 @@
 		    	font_name: 'Fonts/PressStart2P.ttf' 
 		        text: 'Play'
 		        on_press: root.start_click()
-		        on_press: root.dismiss()  
-
-<-TimeUpPopUp>
-	Label:
-		text: 'TIME UP'             		 
+		        on_press: root.dismiss()            		 
  
 <DataBar>
 	game: app.game
 	
 	canvas:
-		Color:
-        	rgba: 0.5, 0.957, 0.988, 1
 		Rectangle:
+			source: root.img_databar
         	pos: self.pos
         	size: self.size	
 	
 	GridLayout:
 		size: root.size
-		x: 0
-		y: root.height * 6     #height is from this widget not the controller widget
+		y: root.height * 6     #root.height is from this widget not the controller widget
 		cols: 3
 		
 		DisplayText:
-			text: 'Score'
-		DisplayText:
-			text: 'High Score'	
+			text: 'Score'	
 		DisplayText:
 			text: 'Time'
+		DisplayText:
+			text: 'High Score'	
 		
 		DisplayScore:
-			text: str(root.score_label)								          		
-		DisplayScore:
-			text: str(root.high_score_label)				
+			text: str(root.score_label)								          						
 		DisplayScore: 
-			text: str(root.time_label)         
+			text: str(root.time_label)
+		DisplayScore:
+			text: str(root.high_score_label)	         
 				
 <Mole>
 	game: app.game
-	
-	kvheight: root.height
-	kvwidth: root.width
 	
 	canvas.before:
 		Rectangle:
 			source: root.current_char
 			pos: self.pos
+			size: self.size
 			
 <MoleGame>:
 	app: app
 	databar: databar_obj
 	mole: mole_obj
 	gamebox: game_box_obj
-	
-	kvcenter_x: root.width/2
-	kvcenter_y: root.height/2
        
 	BoxLayout:
 		orientation: 'vertical'
@@ -176,7 +164,7 @@
 		###Contains the display labels
 		DataBar:
 			id: databar_obj	
-			size_hint: 1, .1667			
+			size_hint: 1, .1667		# 1 / the databar size multiplier
 
 		###Displays the game box
 		FloatLayout:	
@@ -189,6 +177,6 @@
 		    	             
 		    Mole:	
 		    	id: mole_obj
-		    	size_hint: .15, .2
-		    	center_x: root.kvcenter_x
-		    	center_y: root.kvcenter_y
+		    	size_hint: self.mole_size
+		    	center_x: root.width/2
+		    	center_y: root.height/2
