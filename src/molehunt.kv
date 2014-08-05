@@ -1,14 +1,24 @@
 #kivy 1.8.0
 
-<DisplayText@Label>
+<DisplayText_1@Label>
 	font_name: 'Fonts/PressStart2P.ttf'
 	bold: True
 	font_size: 20	
 
-<DisplayScore@Label> 
+<DisplayScore_1@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	bold: True      
 	font_size: 15
+	
+<DisplayText_2@Label>
+	font_name: 'Fonts/PressStart2P.ttf'
+	bold: True
+	font_size: 15	
+
+<DisplayScore_2@Label> 
+	font_name: 'Fonts/PressStart2P.ttf' 
+	bold: True      
+	font_size: 10	
 	
 <DescriptionText@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
@@ -30,12 +40,12 @@
 		orientation: 'vertical'
 		size: root.x_size, root.y_size
 		center: root.x_center, root.y_center
-		DisplayText:
+		DisplayText_1:
 			size_hint: 1, 5
 			text: 'Times Up'
-		DisplayScore:
+		DisplayScore_1:
 			text: 'Score'	
-		DisplayScore:
+		DisplayScore_1:
 			text: str(root.app.game.databar.score_label)	
 
 <SelectBox>
@@ -91,7 +101,7 @@
 		###Title & Description	
 		BoxLayout:
 			orientation: 'vertical'	
-			DisplayText:
+			DisplayText_1:
 				text: 'Mole Basher'	
 			DescriptionText:
 				text: 'Bash your chosen face as many times as possible in the time limit available.'		
@@ -123,24 +133,35 @@
         	pos: self.pos
         	size: self.size	
 	
-	GridLayout:
+	BoxLayout:
 		size: root.size
-		y: root.height * 6     #root.height is from this widget not the controller widget
-		cols: 3
+		y: root.height * 6    #root.height is from this widget not the controller widget
+		orientation: 'horizontal'
 		
-		DisplayText:
-			text: 'Score'	
-		DisplayText:
-			text: 'Time'
-		DisplayText:
-			text: 'High Score'	
-		
-		DisplayScore:
-			text: str(root.score_label)								          						
-		DisplayScore: 
-			text: str(root.time_label)
-		DisplayScore:
-			text: str(root.high_score_label)	         
+		BoxLayout:
+			orientation: 'vertical'
+			DisplayText_2:
+				text: 'Score'	
+			DisplayScore_2:
+				text: str(root.score_label)	
+			BoxLayout:
+				size_hint: 1, 1.5       #Creates a blank box below the text in effect pushing the text up
+				
+		BoxLayout:
+			orientation: 'vertical'		
+			DisplayText_1:
+				text: 'Time'
+			DisplayScore_1: 
+				text: str(root.time_label)
+				
+		BoxLayout:
+			orientation: 'vertical'	
+			DisplayText_2:
+				text: 'High Score'								          						
+			DisplayScore_2:
+				text: str(root.high_score_label)	
+			BoxLayout:
+				size_hint: 1, 1.5	         
 				
 <Mole>
 	game: app.game
@@ -164,7 +185,7 @@
 		###Contains the display labels
 		DataBar:
 			id: databar_obj	
-			size_hint: 1, .1667		# 1 / the databar size multiplier
+			size_hint: 1, 0.1667	# 1 / the databar size multiplier
 
 		###Displays the game box
 		FloatLayout:	

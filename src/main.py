@@ -1,14 +1,16 @@
 '''
 Added
--Refactored code
--Organised changeable elements
--Organised charselect better
--1st draft of game graphics
+-Fixed databar layout
+-Changed both characters to moles
+-Added sounds 
 
 To Do 
 -Check timer will work even if game is running slowly
--change how databar/gamebox is sized to one central number
+-Organise kv file into changeable elements
 -Create more advanced graphics
+-Add phone vibration through plyer (platform independent way to access API)
+-Make mole proportionally sized correctly
+-Sort text sizing
 
 Widget tree
 -app
@@ -30,6 +32,7 @@ kivy.require('1.8.0')
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
+from kivy.core.audio import SoundLoader
 from kivy.properties import ListProperty, NumericProperty, ObjectProperty, BooleanProperty, StringProperty
 from random import randrange
 from kivy.uix.popup import Popup
@@ -40,6 +43,10 @@ class TimesUp(Widget):
     'Change pop up size'
     width_factor = NumericProperty(0.5)
     height_factor = NumericProperty(0.3)    
+    'Sound at game end'
+    sound_bad = SoundLoader.load('Sounds/sound_bad.wav')
+    sound_neutral = SoundLoader.load('Sounds/sound_neutral.wav')
+    sound_good = SoundLoader.load('Sounds/sound_good.wav')    
     
     x_size = NumericProperty(0)
     y_size = NumericProperty(0)
@@ -48,16 +55,29 @@ class TimesUp(Widget):
     
     def __init__(self, *args, **kwargs):
         super(TimesUp, self).__init__(*args, **kwargs)
+        self.sound()
         self.sizing()    #sizing has to be before positioning.  otherwise the center of widget is unknown
         self.position()
+    
+    #plays end game sonds based on score
+    def sound(self):
+        print self.app.game.databar.score
+        cond1 = self.app.game.databar.score_label < 10
+        cond2 = self.app.game.databar.score_label > 20
+        if cond1:
+            self.sound_bad.play()
+        elif cond2:
+            self.sound_good.play()
+        else:
+            self.sound_neutral.play()        
     
     def sizing(self):
         self.x_size = self.app.game.width * self.width_factor
         self.y_size = self.app.game.height * self.height_factor
         
     def position(self, *args):
-        self.x_center = self.app.game.kvcenter_x 
-        self.y_center = self.app.game.kvcenter_y 
+        self.x_center = self.app.game.width/2 
+        self.y_center = self.app.game.height/2
         
 class SelectBox(Widget):
     startpopup = ObjectProperty(None)   
@@ -128,7 +148,11 @@ class DataBar(Widget):
     
     score_label = NumericProperty(0)     
     high_score_label = NumericProperty(0)  
-    time_label = NumericProperty(0)       
+    time_label = NumericProperty(0)        
+    
+    def start(self):
+        self.score_label = 0
+        self.time_label = 0
                
     def score(self):  
         self.score_label += 1  
@@ -151,20 +175,27 @@ class Mole(Widget):
     
     'Starting character selection'
     current_char = StringProperty('Images/mole.png')
-    
     'Size of mole as percentage of screen (height , width)'
     mole_size = ListProperty([0.1, 0.15])
+    'Min gap between mole center and screen edges'
+    wall_gap = NumericProperty(1.2)  #Needs to be a percentage to times the width/height of mole by    
+    'Sound when mole is tapped'
+    sound_mole = SoundLoader.load('Sounds/sound_mole.wav')
     
-    'Distance from wall moles center cant be'
-    wall_gap = NumericProperty(1.2)  #Needs to be a percentage to times the width/height of mole by 
-          
     #Detection of touch on mole
     def on_touch_down(self, touch):
         cond1 = self.collide_point(*touch.pos)
         cond2 = self.game.playing_label
         if cond1 and cond2:
+            self.sound()
             self.move()
             self.game.databar.score()  
+
+    def sound(self):
+        # stop the sound if it's currently playing
+        if self.sound_mole.status != 'stop':
+            self.sound_mole.stop()
+        self.sound_mole.play()
                   
     def move(self):
         self.pos = self.random()
@@ -194,16 +225,14 @@ class MoleGame(Widget):
     
     'Gamebox Image'
     img_gamebox = StringProperty('Images/gamebox.png')  
-    
     'Seconds times_up pop up is visible for'  
     timesup_time = NumericProperty(2)
     
-    playing_label = BooleanProperty(False)      
-                
+    playing_label = BooleanProperty(False)  
+    
     def start_game(self):
         self.playing_label = True
-        self.databar.score_label = 0
-        self.databar.time_label = 0
+        self.databar.start()
         
     def end_game(self):
         self.mole.end()
