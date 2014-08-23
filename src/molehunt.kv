@@ -1,37 +1,47 @@
 #kivy 1.8.0
+###sp for fonts is kivys reccomended way of scaling text between screen densities
 
+##Main 'time' title	
 <DisplayText_1@Label>
 	font_name: 'Fonts/PressStart2P.ttf'
 	bold: True
-	font_size: 20	
+	font_size: '18sp'
 
+##time display	
 <DisplayScore_1@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	bold: True      
-	font_size: 15
-	
+	font_size: '14sp'
+
+##Titles e.g. 'score', 'high score'
 <DisplayText_2@Label>
 	font_name: 'Fonts/PressStart2P.ttf'
 	bold: True
-	font_size: 15	
+	font_size: '12sp'	
 
+##Scores under titles
 <DisplayScore_2@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	bold: True      
-	font_size: 10	
-	
+	font_size: '8sp'	
+
+##popup game description text	
 <DescriptionText@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	text_size: self.size
 	valign: 'middle'
 	halign: 'center'
 	bold: True      
-	font_size: 10	
+	font_size: '8sp'
 
-###Having this template gives button behaviour to Image
-###Allowing the on_press event to function	
+###Character selection class
+#Having this template gives button behaviour to Image
+#Allowing the on_press event to function	
 <Character@ButtonBehavior+Image>
 	on_press: app.startpopup.charselect.image_select(self)
+	
+###Medal class
+<Medal@Image>	
 
 <TimesUp>
 	app: app
@@ -48,6 +58,23 @@
 		DisplayScore_1:
 			text: str(root.app.game.databar.score_label)	
 
+<Achievements>
+	startpopup: app.startpopup
+	
+	###Achievement medals				
+	GridLayout:	
+		size: root.size
+		cols: 4
+		padding: sp(2)
+		Medal:
+			source: root.medal_1
+		Medal:
+			source: root.medal_2
+		Medal:
+			source: root.medal_3
+		Medal:	
+			source: root.medal_4
+
 <SelectBox>
 	startpopup: app.startpopup
 	
@@ -56,7 +83,7 @@
 		size: root.x_width, root.y_height
 		canvas:
 			Rectangle:
-				source: root.img_selectbox
+				source: 'Images/selectbox.png'
 				size: self.size
 				pos: self.pos	
 				
@@ -73,7 +100,7 @@
 	GridLayout:	
 		size: root.size
 		cols: root.char_columns
-		padding: self.width/40
+		padding: sp(25)
 		Character:
 			id: character1_obj
 			source: root.character_lst[0]	
@@ -84,52 +111,68 @@
 <-StartPopUp>
 	app: app
 	charselect: charselect_obj
+	achievements: achievements_obj
 				
     size_hint: root.startpopup_size
     auto_dismiss: False  
-    			
-	BoxLayout:
-		size: root.size 
-		padding: self.width/75
-		orientation: 'vertical'	
-		canvas:
-			Rectangle:
-				source: root.img_startpopup
-				size: self.size
-				pos: self.pos
-		
-		###Title & Description	
-		BoxLayout:
+    
+    BoxLayout:
+    	size: root.size
+    	orientation: 'vertical'
+    	
+    	###Main popup			
+		BoxLayout: 
+			padding: sp(2)
 			orientation: 'vertical'	
-			DisplayText_1:
-				text: 'Mole Basher'	
-			DescriptionText:
-				text: 'Bash your chosen face as many times as possible in the time limit available.'		
-		
-		###Character Selection	
+			
+			canvas:
+				Rectangle:
+					source: 'Images/popup.png'
+					size: self.size
+					pos: self.pos
+			
+			###Title & Description	
+			BoxLayout:
+				orientation: 'vertical'	
+				DisplayText_2:
+					text: 'Mole Basher'	
+				DescriptionText:
+					text: 'Bash your chosen face as many times as possible in the time limit available.'
+				DescriptionText:
+					text: 'Character Selection'
+					color: 1, 1, 0.5, 1 			
+			
+			###Character Selection	
+			RelativeLayout:
+				CharSelect:
+					id: charselect_obj
+			
+			###Button
+			AnchorLayout:
+				size_hint: 1, 0.5
+				anchor_x: 'center'
+				anchor_y: 'center'	
+			    Button:
+			    	background_color: 0, 0, 0, 0
+			    	size_hint: 0.5, 0.9
+			    	font_name: 'Fonts/PressStart2P.ttf'
+			    	color: 1, 0.5, 0.5, 1 
+			        text: 'Play'
+			        on_press: root.start_click()
+			        on_press: root.dismiss() 
+			        
+		###Achievements board
 		RelativeLayout:
-			CharSelect:
-				id: charselect_obj
-		
-		###Button
-		AnchorLayout:
-			size_hint: 1, 0.5
-			anchor_x: 'center'
-			anchor_y: 'center'	
-		    Button:
-		    	background_color: 0, 0, 0, 0
-		    	size_hint: 0.5, 0.9
-		    	font_name: 'Fonts/PressStart2P.ttf' 
-		        text: 'Play'
-		        on_press: root.start_click()
-		        on_press: root.dismiss()            		 
+			size_hint: 1, 0.25
+			Achievements: 
+				id: achievements_obj
  
 <DataBar>
 	game: app.game
 	
 	canvas:
 		Rectangle:
-			source: root.img_databar
+			source: 'Images/databar.png'
         	pos: self.pos
         	size: self.size	
 	
@@ -168,9 +211,9 @@
 	
 	canvas.before:
 		Rectangle:
-			source: root.current_char
+			source: 'Images/mole.png'
+			size: sp(self.mole_width), sp(self.mole_height)
 			pos: self.pos
-			size: self.size
 			
 <MoleGame>:
 	app: app
@@ -192,12 +235,11 @@
 			id: game_box_obj			
 			canvas:
 		        Rectangle:
-		        	source: root.img_gamebox
+		        	source: 'Images/gamebox.png'
 		            pos: self.pos
 		            size: self.size		    	
 		    	             
 		    Mole:	
 		    	id: mole_obj
-		    	size_hint: self.mole_size
 		    	center_x: root.width/2
 		    	center_y: root.height/2
