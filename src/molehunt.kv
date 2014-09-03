@@ -23,10 +23,10 @@
 <DisplayScore_2@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	bold: True      
-	font_size: '8sp'	
+	font_size: '9sp'	
 
 ##popup game description text	
-<DescriptionText@Label> 
+<GeneralText@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	text_size: self.size
 	valign: 'middle'
@@ -38,10 +38,17 @@
 #Having this template gives button behaviour to Image
 #Allowing the on_press event to function	
 <Character@ButtonBehavior+Image>
-	on_press: app.startpopup.charselect.image_select(self)
+	color: 0.5, 0.5, 0.5, 0.5
+	on_touch_up: if self.collide_point(*args[1].pos): app.startpopup.charselect.image_select(self)
 	
 ###Medal class
 <Medal@Image>	
+	color: 0.5, 0.5, 0.5, 0.5  
+
+###Underline class
+<Underline@Image>
+	Image:
+		source: 'Images/underline.png'	
 
 <TimesUp>
 	app: app
@@ -51,8 +58,9 @@
 		size: root.x_size, root.y_size
 		center: root.x_center, root.y_center
 		DisplayText_1:
+			id: timesup_text
 			size_hint: 1, 5
-			text: 'Times Up'
+			text: root.times_up	
 		DisplayScore_1:
 			text: 'Score'	
 		DisplayScore_1:
@@ -60,52 +68,51 @@
 
 <Achievements>
 	startpopup: app.startpopup
+	bronze_medal: bronze_medal_obj
+	silver_medal: silver_medal_obj
+	gold_medal: gold_medal_obj
+	platinum_medal: platinum_medal_obj
 	
 	###Achievement medals				
 	GridLayout:	
 		size: root.size
 		cols: 4
 		padding: sp(2)
+		spacing: sp(5)
 		Medal:
-			source: root.medal_1
+			id: bronze_medal_obj
+			source: 'Images/Bronze.png'
 		Medal:
-			source: root.medal_2
+			id: silver_medal_obj
+			source: 'Images/Silver.png'
 		Medal:
-			source: root.medal_3
+			id: gold_medal_obj
+			source: 'Images/Gold.png'
 		Medal:	
-			source: root.medal_4
-
-<SelectBox>
-	startpopup: app.startpopup
-	
-	BoxLayout:
-		center: root.x_center, root.y_center
-		size: root.x_width, root.y_height
-		canvas:
-			Rectangle:
-				source: 'Images/selectbox.png'
-				size: self.size
-				pos: self.pos	
+			id: platinum_medal_obj
+			source: 'Images/Platinum.png'	
 				
 <CharSelect>
 	startpopup: app.startpopup
-	selectbox: selectbox_obj
 	character1: character1_obj
-	
-	###Selection Box		
-	SelectBox:
-		id: selectbox_obj	
+	character2: character2_obj
+	character3: character3_obj
 	
 	###Characters
 	GridLayout:	
 		size: root.size
 		cols: root.char_columns
-		padding: sp(25)
+		padding: sp(10)     #padding is between grid layout and other alyouts
+		spacing: sp(15)		#spacing is between grid layouts children
 		Character:
 			id: character1_obj
-			source: root.character_lst[0]	
+			source: root.character_lst["mole_1"]	
 		Character:
-			source: root.character_lst[1]		
+			id: character2_obj
+			source: root.character_lst["mole_2"]	
+		Character:
+			id: character3_obj
+			source: root.character_lst["mole_3"]		
 
 #The 'DASH' overides the automatic popup attributes
 <-StartPopUp>
@@ -120,11 +127,14 @@
     	size: root.size
     	orientation: 'vertical'
     	
+    	#Blank box to shift popup down
+    	BoxLayout:
+    		size_hint: 1, 0.25
+    	
     	###Main popup			
 		BoxLayout: 
 			padding: sp(2)
 			orientation: 'vertical'	
-			
 			canvas:
 				Rectangle:
 					source: 'Images/popup.png'
@@ -134,13 +144,15 @@
 			###Title & Description	
 			BoxLayout:
 				orientation: 'vertical'	
+				DisplayText_1:
+					text: 'Mole Bash'
+				GeneralText:
+					valign: 'top'
+					text: 'These moles are struggling to burrow home.  Tap them as many times as possible to bash them back underground. '
 				DisplayText_2:
-					text: 'Mole Basher'	
-				DescriptionText:
-					text: 'Bash your chosen face as many times as possible in the time limit available.'
-				DescriptionText:
-					text: 'Character Selection'
-					color: 1, 1, 0.5, 1 			
+					valign: 'bottom'
+					color: 1, 1, 0.5, 1
+					text: 'Select Your Character'	
 			
 			###Character Selection	
 			RelativeLayout:
@@ -156,10 +168,13 @@
 			    	background_color: 0, 0, 0, 0
 			    	size_hint: 0.5, 0.9
 			    	font_name: 'Fonts/PressStart2P.ttf'
+			    	font_size: sp(25)
 			    	color: 1, 0.5, 0.5, 1 
 			        text: 'Play'
-			        on_press: root.start_click()
-			        on_press: root.dismiss() 
+			        on_press: root.press_down(self)
+			        on_touch_up: root.press_release(self)
+			        on_touch_up: if self.collide_point(*args[1].pos): root.start_click()  #ensures these lines only run if touch up
+			        on_touch_up: if self.collide_point(*args[1].pos): root.dismiss() 	  #is on play button
 			        
 		###Achievements board
 		RelativeLayout:
@@ -184,35 +199,46 @@
 		BoxLayout:
 			orientation: 'vertical'
 			DisplayText_2:
-				text: 'Score'	
+				text: 'Score'
+			Underline:	
+				size_hint: 0.5, 0.05
+				pos_hint: {'center_x': 0.5}		
 			DisplayScore_2:
 				text: str(root.score_label)	
 			BoxLayout:
-				size_hint: 1, 1.5       #Creates a blank box below the text in effect pushing the text up
+				size_hint: 1, 1.1       #Creates a blank box below the text in effect pushing the text up
 				
 		BoxLayout:
 			orientation: 'vertical'		
 			DisplayText_1:
 				text: 'Time'
+			Underline:
+				size_hint: 0.5, 0.05
+				pos_hint: {'center_x': 0.5}			
 			DisplayScore_1: 
 				text: str(root.time_label)
+			BoxLayout:
+				size_hint: 1, 0.2       #Creates a blank box below the text in effect pushing the text up	
 				
 		BoxLayout:
 			orientation: 'vertical'	
 			DisplayText_2:
-				text: 'High Score'								          						
+				text: 'High Score'
+			Underline:	
+				size_hint: 0.5, 0.05
+				pos_hint: {'center_x': 0.5}										          						
 			DisplayScore_2:
 				text: str(root.high_score_label)	
 			BoxLayout:
-				size_hint: 1, 1.5	         
+				size_hint: 1, 1.1	         
 				
 <Mole>
 	game: app.game
 	
 	canvas.before:
 		Rectangle:
-			source: 'Images/mole.png'
-			size: sp(self.mole_width), sp(self.mole_height)
+			source: root.current_char
+			size: self.size
 			pos: self.pos
 			
 <MoleGame>:
@@ -238,8 +264,10 @@
 		        	source: 'Images/gamebox.png'
 		            pos: self.pos
 		            size: self.size		    	
-		    	             
+		                
 		    Mole:	
 		    	id: mole_obj
+		    	size_hint: None, None   #this is needed otherwise mole takes on size of floatlayout
+		    	size: sp(self.mole_width), sp(self.mole_height)  #Size needs set here otherwise it is lost when added to floatlayout
 		    	center_x: root.width/2
 		    	center_y: root.height/2

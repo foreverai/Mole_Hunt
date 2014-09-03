@@ -1,18 +1,31 @@
 '''
 Added
--Moved sounds to a matrix in the app class
--Added high score read/writing to text file (to save high score after game is closed)
--Character1 is always the selected character sprite when game ends
--Text scales between screen densities
--Mole scales between screens
--Added 4 achievement levels
+-corrected mole size (was taking size of floatlayout which was screwing with positioning)
+-added another mole character
+-added underlining to display
+-added menu and start sounds
+-added medal win sounds
+-open sounds end when the play button is clicked
+-Fixed sizing of 3rd mole image
+-Made mole fit in the middle of game over text
+-Made play button fire on release rather than on press
+-made open loop sound better
+-Removed no-medal symbol, and made non achieved medals translucent
+-Removed select box, and replaced with moles being translucent when not selected
+-added medal sound
+-made audio files smaller
+-made play button transparent on click
+-made play button and character selects only fire on touch up with a touch on the widget
 
-To Do Before Production Release
--General tidy up
--Check scores arn't overwritten on update/removal
--Mole restart position is wrong
+To Do
+-Check scores arn't overwritten on update/removal on
 
 Future features
+-Make background grass, and have a little graphic of dug up dirt below each mole
+-Change pop ups to modalviews
+-Put changeable game mechanics, graphics, images, sounds, text in json files
+-Put images in atlas
+-Make a story, each medal earned adds to the story
 -Make character select keep currently selected character rather than reverting to character1
 -Phone vibration on tap (using plyer to access android vibration api)
 -Display top 5 friends scores on game HUD, or on between game screen
@@ -28,13 +41,11 @@ Widget tree
 -startpopup
     -achievements
     -charselect
-        -character1
-        -selectbox
 -timesup      
   
 '''
 
-__version__ = '1.0.4'
+__version__ = '1.0.5'
 
 import kivy
 kivy.require('1.8.0')
@@ -52,8 +63,15 @@ class TimesUp(Widget):
     
     'Change pop up size'
     width_factor = NumericProperty(0.5)
-    height_factor = NumericProperty(0.3)    
+    height_factor = NumericProperty(0.4)    
     
+    'Change timesup_text'
+    timesup_text = {
+        "Lost": 'Game Over',
+        "Win": 'Congratulations!.'
+    }    
+    
+    times_up = StringProperty()
     x_size = NumericProperty(0)
     y_size = NumericProperty(0)
     x_center = NumericProperty(0)
@@ -67,111 +85,113 @@ class TimesUp(Widget):
     
     #plays end game sonds based on score
     def sound(self):
-        cond1 = self.app.game.databar.score_label < 10
-        cond2 = self.app.game.databar.score_label > 20
+        cond1 = self.app.game.databar.score_label < 17
+        cond2 = self.app.game.databar.score_label >= 18
         if cond1:
             self.app.sounds["Lost"].play()
+            self.times_up = self.timesup_text["Lost"]
         elif cond2:
             self.app.sounds["Win"].play()
-        else:
-            self.app.sounds["Draw"].play()        
-    
+            self.times_up = self.timesup_text["Win"]
+      
     def sizing(self):
         self.x_size = self.app.game.width * self.width_factor
         self.y_size = self.app.game.height * self.height_factor
         
     def position(self, *args):
         self.x_center = self.app.game.width/2 
-        self.y_center = self.app.game.height/2
+        self.y_center = self.app.game.height/100 * 54   #Slightly off center so the mole appears in the middle of the text without covering it
 
 class Achievements(Widget):
     startpopup = ObjectProperty(None)
+    bronze_medal = ObjectProperty(None)
+    silver_medal = ObjectProperty(None)
+    gold_medal = ObjectProperty(None)
+    platinum_medal = ObjectProperty(None)
     
     'Set medal scores'
-    bronze = NumericProperty(15)
+    bronze = NumericProperty(18)
     silver = NumericProperty(20)
     gold = NumericProperty(22)
     platinum = NumericProperty(25)
     
-    'Medal images'
-    medal_images = {
-        "No_Medal": 'Images/No_Medal.png',
-        "Bronze": 'Images/Bronze.png',
-        "Silver": 'Images/Silver.png',
-        "Gold": 'Images/Gold.png',
-        "Platinum": 'Images/Platinum.png'
-        }
-    
+    start_game = BooleanProperty(True)
     top_score = NumericProperty(0)
-    medal_1 = StringProperty()
-    medal_2 = StringProperty()
-    medal_3 = StringProperty()
-    medal_4 = StringProperty()
+    medal_1_full = BooleanProperty(False)
+    medal_2_full = BooleanProperty(False)
+    medal_3_full = BooleanProperty(False)
+    medal_4_full = BooleanProperty(False)
     
+    #Sets if which medals are displayed
+    #Messy implementation...probably an easier way
     def fill_medals(self):
         self.top_score = self.startpopup.app.game.databar.high_score_label
-        if self.top_score >= self.platinum:
-            self.medal_4 = self.medal_images["Platinum"]
-        else: 
-            self.medal_4 = self.medal_images["No_Medal"]
-                
-        if self.top_score >= self.gold:
-            self.medal_3 = self.medal_images["Gold"]
-        else: 
-            self.medal_3 = self.medal_images["No_Medal"]
-                
-        if self.top_score >= self.silver:
-            self.medal_2 = self.medal_images["Silver"]
-        else: 
-            self.medal_2 = self.medal_images["No_Medal"]
-                
-        if self.top_score >= self.bronze:
-            self.medal_1 = self.medal_images["Bronze"]
-        else: 
-            self.medal_1 = self.medal_images["No_Medal"]
         
-class SelectBox(Widget):
-    startpopup = ObjectProperty(None)   
-    
-    x_center = NumericProperty(0)
-    y_center = NumericProperty(0) 
-    x_width = NumericProperty(0)
-    y_height = NumericProperty(0) 
-    
-    #Sizing and positioning in charselect.  
-    #Issues selecting through the widget tree prevent putting them in SelectBox 
+        #Bronze medal
+        cond1 = self.top_score >= self.bronze
+        cond2 = self.medal_1_full == False
+        if cond1 and cond2:
+            self.bronze_medal.color = 1, 1, 1, 1    #Makes medal opaque
+            self.medal_sound()
+            self.medal_1_full = True
+        
+        #Silver medal
+        cond1 = self.top_score >= self.silver
+        cond2 = self.medal_2_full == False
+        if cond1 and cond2:
+            self.silver_medal.color = 1, 1, 1, 1
+            self.medal_sound()
+            self.medal_2_full = True
+        
+        #Gold medal
+        cond1 = self.top_score >= self.gold
+        cond2 = self.medal_3_full == False
+        if cond1 and cond2:
+            self.gold_medal.color = 1, 1, 1, 1
+            self.medal_sound()
+            self.medal_3_full = True
+            
+        #Platinum medal            
+        cond1 = self.top_score >= self.platinum
+        cond2 = self.medal_4_full == False
+        if cond1 and cond2:
+            self.platinum_medal.color = 1, 1, 1, 1
+            self.medal_sound()
+            self.medal_4_full = True
+            
+        self.start_game = False  #Now medal sounds will play when they are achieved
+            
+    def medal_sound(self):
+        if self.start_game == False:
+            self.startpopup.app.sounds["Medal"].play()
 
 class CharSelect(Widget):
     startpopup = ObjectProperty(None)
-    selectbox = ObjectProperty(None)
     character1 = ObjectProperty(None)
+    character2 = ObjectProperty(None)
+    character3 = ObjectProperty(None) 
     
     'Number of columns to split character sprites over'
-    char_columns = NumericProperty(2)
+    char_columns = NumericProperty(3)
     
-    character_lst = ListProperty([])
-     
-    def __init__(self, *args, **kwargs):
-        super(CharSelect, self).__init__(*args, **kwargs)
-        'Put selectable characters here, also add a character widget in kv file'
-        self.character_lst.append('Images/mole.png') 
-        self.character_lst.append('Images/bird.png')   
+    character_lst = {
+        "mole_1": 'Images/mole_1.png',
+        "mole_2": 'Images/mole_2.png',
+        "mole_3": 'Images/mole_3.png'
+    }              
     
-    #Position selectbox on start    
+    #Select center mole on start   
     def start(self, *args):
-        #if these are in select box widget charselect cant be accessed from selectbox, why?
-        self.selectbox.x_width = self.character1.width
-        self.selectbox.y_height = self.character1.height 
-        self.selectbox.x_center = self.character1.center_x
-        self.selectbox.y_center = self.character1.center_y
+        self.character2.color = 1, 1, 1, 1
         self.startpopup.app.game.mole.current_char = self.character1.source        
     
-    #Position selectbox on character click
+    #Change transparency of selected character
     def image_select(self, character):
-        self.selectbox.x_width = character.width
-        self.selectbox.y_height = character.height
-        self.selectbox.x_center = character.center_x
-        self.selectbox.y_center = character.center_y
+        self.startpopup.app.sounds["char_select"].play()
+        self.character1.color = 0.5, 0.5, 0.5, 0.5
+        self.character2.color = 0.5, 0.5, 0.5, 0.5
+        self.character3.color = 0.5, 0.5, 0.5, 0.5
+        character.color = 1, 1, 1, 1
         self.startpopup.app.game.mole.current_char = character.source  
 
 class StartPopUp(Popup):
@@ -179,12 +199,20 @@ class StartPopUp(Popup):
     charselect = ObjectProperty(None)
     
     'Size of startpopup'
-    startpopup_size = ListProperty([.6, .6]) 
+    startpopup_size = ListProperty([.78, .8]) 
     
     #on button click start game           
     def start_click(self):
         self.app.game.start_game()  
-         
+        if self.app.sounds["Open"].status != 'stop':       #stops start game sound if its currently playing
+            self.app.sounds["Open"].stop()
+            
+    def press_down(self, play_text):
+        play_text.color = 1, 0.5, 0.5, 0.4 
+        
+    def press_release(self, play_text):
+        play_text.color = 1, 0.5, 0.5, 1     
+                        
 class DataBar(Widget):
     game = ObjectProperty(None)
     
@@ -194,10 +222,6 @@ class DataBar(Widget):
     score_label = NumericProperty(0)     
     high_score_label = NumericProperty(0)  
     time_label = NumericProperty(0)        
-    
-    def start(self):
-        self.score_label = 0
-        self.time_label = 0
                
     def score(self):  
         self.score_label += 1  
@@ -213,17 +237,24 @@ class DataBar(Widget):
     #Changes the high score if the current score is higher than the old high score    
     def new_high_score(self):
         if self.score_label > self.high_score_label: 
-            self.high_score_label = self.score_label                   
+            self.high_score_label = self.score_label    
+    
+    #Runs when startpopup comes up        
+    def end(self):
+        self.score_label = 0
+        self.time_label = 0                       
                                                    
 class Mole(Widget):
     game = ObjectProperty(None)
     
     'Mole width'
-    mole_width = NumericProperty(55)
+    mole_width = NumericProperty(63)
     'Mole height'
     mole_height = NumericProperty(75)
     'Min gap between mole center and screen edges'
     wall_gap = NumericProperty(1.2)  #Needs to be a percentage to times the width/height of mole by    
+    
+    current_char = StringProperty()
     
     #Detection of touch on mole
     def on_touch_down(self, touch):
@@ -236,8 +267,7 @@ class Mole(Widget):
     
     #Sound to play when mole is tapped
     def sound(self):
-        # stop the sound if it's currently playing
-        if self.game.app.sounds["Mole_Tap"].status != 'stop':
+        if self.game.app.sounds["Mole_Tap"].status != 'stop':     # stop the sound if it's currently playing
             self.game.app.sounds["Mole_Tap"].stop()
         self.game.app.sounds["Mole_Tap"].play()
     
@@ -260,7 +290,6 @@ class Mole(Widget):
     def end(self):
         x = self.game.width/2
         y = self.game.height/2
-        print x, y
         self.center = x, y           
 
 class MoleGame(Widget):
@@ -276,7 +305,7 @@ class MoleGame(Widget):
     
     def start_game(self):
         self.playing_label = True
-        self.databar.start()
+        self.app.sounds["Play"].play()
         Clock.schedule_interval(self.databar.time, 0.1) #to add to counter every 0.1 seconds
         
     def end_game(self):
@@ -285,7 +314,7 @@ class MoleGame(Widget):
         self.playing_label = False
         self.databar.new_high_score()
         self.app.times_up()
-        Clock.schedule_once(self.app.start_popup_scrn, self.timesup_time)      
+        Clock.schedule_once(self.app.start_popup_scrn, self.timesup_time)     
    
 class MoleHuntApp(App):
     game = ObjectProperty(None)
@@ -299,8 +328,11 @@ class MoleHuntApp(App):
         self.sounds = {
             "Mole_Tap": SoundLoader.load('Sounds/mole_tap.wav'),
             "Lost": SoundLoader.load('Sounds/Lost.wav'),
-            "Draw": SoundLoader.load('Sounds/Drawl.wav'),
-            "Win": SoundLoader.load('Sounds/Win.wav')
+            "Win": SoundLoader.load('Sounds/Win.wav'),
+            "char_select": SoundLoader.load('Sounds/char_select.wav'),
+            "Play": SoundLoader.load('Sounds/Play.wav'),
+            "Open": SoundLoader.load('Sounds/Open.wav'),
+            "Medal": SoundLoader.load('Sounds/Medal.wav')
         }
     
     def build(self):
@@ -308,8 +340,11 @@ class MoleHuntApp(App):
         self.startpopup = StartPopUp()
         #Hash out Read line to allow running in kivy launcher
         self.read_save()
-        Clock.schedule_once(self.start_popup_scrn, 0.5) #So it runs after game widget is created
         return self.game
+    
+    #Runs after the build has been made 
+    def on_start(self):
+        self.start_popup_scrn()
     
     #Reads high score data
     def read_save(self):
@@ -331,6 +366,10 @@ class MoleHuntApp(App):
     
     #Displays out of game popup
     def start_popup_scrn(self, *args):
+        open_sound = self.sounds["Open"]
+        open_sound.play()
+        open_sound.loop = True
+        self.game.databar.end()  #resets scores and time to 0 
         self.game.remove_widget(self.timesup) 
         self.startpopup.open() 
         self.startpopup.achievements.fill_medals()  
