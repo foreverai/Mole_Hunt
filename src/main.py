@@ -1,18 +1,17 @@
 '''
 Added
--Changed mole size
--Altered gap between mole and wall
--Made mole reposition on center rather than bottom left
--Fixed some character selection issues
--time was running at double time? not sure why, something fishy
--Made button/characters translucent on press, opaque on touch up or touch moved off widget
--changed achievement scores
+-fixed crash due to read file not being available on startup
+-added comments to new code
 
 To Do
--Check scores arn't overwritten on update/removal on
+-If selected mole is clicked, then an unselected mole is clicked and the touch dragged off, both moles light up, try to recreate and fix
+-Check how it scales on tablets
+-Figure out why things seem to be running at double time, does frame rate need considered?
+-Change open and win sounds to things less annoying
+-Change presplash/icon to less colourful (game screen seehms dull after presplash
+-Make background grass and dirt beneath the mole when it comes up
 
 Future features
--Make background grass, and have a little graphic of dug up dirt below each mole
 -Change pop ups to modalviews
 -Put changeable game mechanics, graphics, images, sounds, text in json files
 -Put images in atlas
@@ -36,7 +35,7 @@ Widget tree
   
 '''
 
-__version__ = '1.1.0'
+__version__ = '1.1.2'
 
 import kivy
 kivy.require('1.8.0')
@@ -55,7 +54,6 @@ class TimesUp(Widget):
     'Change pop up size'
     width_factor = NumericProperty(0.5)
     height_factor = NumericProperty(0.4)    
-    
     'Change timesup_text'
     timesup_text = {
         "Lost": 'Game Over',
@@ -74,7 +72,7 @@ class TimesUp(Widget):
         self.sizing()    #sizing has to be before positioning.  otherwise the center of widget is unknown
         self.position()
     
-    #plays end game sonds based on score
+    #plays end game sounds based on score
     def sound(self):
         cond1 = self.app.game.databar.score_label < 36
         cond2 = self.app.game.databar.score_label >= 36
@@ -120,7 +118,7 @@ class Achievements(Widget):
         
         #Bronze medal
         cond1 = self.top_score >= self.bronze
-        cond2 = self.medal_1_full == False
+        cond2 = self.medal_1_full == False      #code only runs if medal is empty
         if cond1 and cond2:
             self.bronze_medal.color = 1, 1, 1, 1    #Makes medal opaque
             self.medal_sound()
@@ -153,7 +151,7 @@ class Achievements(Widget):
         self.start_game = False  #Now medal sounds will play when they are achieved
             
     def medal_sound(self):
-        if self.start_game == False:
+        if self.start_game == False:     #Code doesn't run on start of game when medals are filled
             self.startpopup.app.sounds["Medal"].play()
 
 class CharSelect(Widget):
@@ -166,6 +164,8 @@ class CharSelect(Widget):
     char_columns = NumericProperty(3)
     'unselected transparency'
     unselected = ListProperty([0.5, 0.5, 0.5, 0.5])
+    'Selected character color'
+    selected = ListProperty([1, 1, 1, 1])
     'character list'
     character_lst = {
         "mole_1": 'Images/mole_1.png',
@@ -177,33 +177,40 @@ class CharSelect(Widget):
     pressed_down = BooleanProperty(False)
     selected_mole = BooleanProperty(False)
     
+    #Implemented these in kv file, with logic in python
+    #Could be better to use on_touch_up, on_touch_move, on_touch_up in python
+    #But this could also be more complex as the collide widget code could be more complex?    
+    
     #Select center mole on start   
     def start(self, *args):
         self.character1.color = self.unselected
-        self.character2.color = 1, 1, 1, 1
+        self.character2.color = self.selected
         self.character3.color = self.unselected
         self.startpopup.app.game.mole.current_char = self.character2.source
-        
+    
+    #When character registers a touch up event on it    
     def character_select(self, character):
-        self.pressed_down = False       
+        self.pressed_down = False            #check what pressed_down does, if its removed characters stay highlighted if you move off them, can't see how it achieves working though?   
         self.selected_mole = False
-        if character == self.pressed_char:
+        if character == self.pressed_char:                  #if touch up is on the same character that registered the touch down
             self.startpopup.app.sounds["Char_Select"].play()
             self.character1.color = self.unselected
             self.character2.color = self.unselected
             self.character3.color = self.unselected
-            character.color = 1, 1, 1, 1
-            self.startpopup.app.game.mole.current_char = character.source               
+            character.color = self.selected
+            self.startpopup.app.game.mole.current_char = character.source   #Change mole character            
     
+    #When character registers a touch down event
     def press_down(self, character):
-        if character.color == [1, 1, 1, 1]:
+        if character.color == self.selected:        #If the clicked mole is already the selected one
             self.selected_mole = True
         self.pressed_down = True
         self.pressed_char = character
-        character.color = 1, 1, 1, 1
-        
+        character.color = self.selected
+    
+    #unselects mole if it is not the current mole and the touch moves off the character  
     def touch_moved(self, character):
-        if self.selected_mole:
+        if self.selected_mole:                          
             pass
         else:
             self.pressed_down = False
@@ -222,7 +229,7 @@ class StartPopUp(Popup):
     
     pressed_down = BooleanProperty(False)
     
-    #on button click start game           
+    #on button click start the game           
     def start_click(self):
         self.app.game.start_game()  
         if self.app.sounds["Open"].status != 'stop':       #stops start game sound if its currently playing
@@ -233,7 +240,7 @@ class StartPopUp(Popup):
         self.pressed_down = True
         play_text.color = self.text_col_pres
     
-    #when touch moves off text text returns to normal color    
+    #when touch moves off text, text returns to normal color    
     def press_release(self, play_text):
         if self.pressed_down:               #only runs if button was pressed in the first place
             self.pressed_down = False
@@ -325,7 +332,7 @@ class MoleGame(Widget):
     gamebox = ObjectProperty(None)
     
     'Seconds times_up pop up is visible for'  
-    timesup_time = NumericProperty(2.5)
+    timesup_time = NumericProperty(2.5)    #needs to be more than the win/lose soud time length
     
     playing_label = BooleanProperty(False)  
     
@@ -364,7 +371,6 @@ class MoleHuntApp(App):
     def build(self):
         self.game = MoleGame()
         self.startpopup = StartPopUp()
-        #Hash out Read line to allow running in kivy launcher
         self.read_save()
         return self.game
     
@@ -374,9 +380,12 @@ class MoleHuntApp(App):
     
     #Reads high score data
     def read_save(self):
-        save_dir = self.user_data_dir
-        f = open (save_dir + '\high_score.txt', 'r')
-        self.game.databar.high_score_label = int(f.read())
+        try:
+            save_dir = self.user_data_dir
+            f = open (save_dir + '\high_score.txt', 'r')
+            self.game.databar.high_score_label = int(f.read())
+        except:                                                             #if the read file isn't there make high score 0
+            self.game.databar.high_score_label = 0    
     
     #Writes high score data to file
     def on_stop(self):
