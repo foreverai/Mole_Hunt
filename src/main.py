@@ -1,24 +1,21 @@
 '''
 Added
--fixed crash due to read file not being available on startup
--added comments to new code
 
 To Do
--If selected mole is clicked, then an unselected mole is clicked and the touch dragged off, both moles light up, try to recreate and fix
+-add a line saying 'A Boundless Production'
+-add a restart button on the game screen
+-Name the moles Adrian, Marvin and Howard
+-Add endless mode
+-Add game services
+-Add connection to rate app/leaderboard on main screen
+
+Future features
 -Check how it scales on tablets
 -Figure out why things seem to be running at double time, does frame rate need considered?
 -Change open and win sounds to things less annoying
--Change presplash/icon to less colourful (game screen seehms dull after presplash
 -Make background grass and dirt beneath the mole when it comes up
-
-Future features
--Change pop ups to modalviews
--Put changeable game mechanics, graphics, images, sounds, text in json files
--Put images in atlas
--Make a story, each medal earned adds to the story
 -Make character select keep currently selected character rather than reverting to character1
 -Phone vibration on tap (using plyer to access android vibration api)
--Display top 5 friends scores on game HUD, or on between game screen
 -Display ads
 -Ability to take pictures of people and have them as characters
 
@@ -35,7 +32,7 @@ Widget tree
   
 '''
 
-__version__ = '1.1.2'
+__version__ = '1.1.4'
 
 import kivy
 kivy.require('1.8.0')
@@ -210,9 +207,9 @@ class CharSelect(Widget):
     
     #unselects mole if it is not the current mole and the touch moves off the character  
     def touch_moved(self, character):
-        if self.selected_mole:                          
+        if self.selected_mole and self.pressed_down:                          
             pass
-        else:
+        elif self.pressed_down:
             self.pressed_down = False
             self.pressed_char.color = self.unselected       
 
@@ -286,6 +283,8 @@ class Mole(Widget):
     mole_height = NumericProperty(60)
     'Min gap between mole center and screen edges'
     wall_gap = NumericProperty(1.2)  #Needs to be a percentage to times the width/height of mole by    
+    'extra distance at bottom from wall, to avoid accidental tapping of home keys'
+    bottom_dist = NumericProperty(1.5)
     
     current_char = StringProperty()
     
@@ -314,8 +313,8 @@ class Mole(Widget):
         left = int(self.mole_width * self.wall_gap) #left side gap
         right = int(self.game.gamebox.get_right() - left) #right side gap
         x = randrange(left , right , 1)  
-        bottom = int(self.mole_height * self.wall_gap) #bottom gap
-        top = int(self.game.gamebox.get_top() - bottom) #top gap 
+        bottom = int(self.mole_height * self.wall_gap) * self.bottom_dist #bottom gap #timesed by 2 to prevent accidental hitting of home keys
+        top = int(self.game.gamebox.get_top() - self.mole_height * self.wall_gap) #top gap
         y = randrange(bottom , top , 1)       
         return (x, y)        
     

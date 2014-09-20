@@ -39,8 +39,8 @@
 #Allowing the on_press event to function	
 <Character@ButtonBehavior+Image>
 	color: 0.5, 0.5, 0.5, 0.5
-    on_press: 
-    	app.startpopup.charselect.press_down(self)
+    on_touch_down: 
+    	if self.collide_point(*args[1].pos): app.startpopup.charselect.press_down(self)
     on_touch_move:
     	if self.collide_point(*args[1].pos): pass     #if touch moves off play button highlighting goes away
     	else: app.startpopup.charselect.touch_moved(self)		
@@ -108,7 +108,7 @@
 	GridLayout:	
 		size: root.size
 		cols: root.char_columns
-		padding: sp(10)     #padding is between grid layout and other alyouts
+		padding: sp(10)     #padding is between grid layout and other layouts
 		spacing: sp(15)		#spacing is between grid layouts children
 		Character:
 			id: character1_obj
@@ -177,8 +177,8 @@
 			    	font_size: sp(25)
 			    	color: root.text_col_norm
 			        text: 'Play'
-			        on_press: 
-			        	root.press_down(self)
+			        on_touch_down: 
+			        	if self.collide_point(*args[1].pos): root.press_down(self)
 			        on_touch_move: 													
 			        	if self.collide_point(*args[1].pos): pass     #if touch moves off play button highlighting goes away
 			        	else: root.press_release(self)	
