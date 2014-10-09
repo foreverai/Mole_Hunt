@@ -1,11 +1,13 @@
 '''
 Added
+-add a line saying 'Boundless Productions'
+-Added second gamemode button, and changed press logic to be the same as that from the character selection
+-Added endless game mode logic
+-Added 0.2s graphic
 
 To Do
--add a line saying 'A Boundless Production'
+-Fix touch registering anywhere
 -add a restart button on the game screen
--Name the moles Adrian, Marvin and Howard
--Add endless mode
 -Add game services
 -Add connection to rate app/leaderboard on main screen
 
@@ -41,6 +43,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.core.audio import SoundLoader
+from kivy.uix.label import Label
 from kivy.properties import ListProperty, NumericProperty, ObjectProperty, BooleanProperty, StringProperty
 from random import randrange
 from kivy.uix.popup import Popup
@@ -224,30 +227,44 @@ class StartPopUp(Popup):
     'Pressed down text color'
     text_col_pres = 1, 0.5, 0.5, 0.4 
     
+    pressed_but = ObjectProperty(None)
+    selected_but = BooleanProperty(False)
     pressed_down = BooleanProperty(False)
     
     #on button click start the game           
-    def start_click(self):
-        self.app.game.start_game()  
-        if self.app.sounds["Open"].status != 'stop':       #stops start game sound if its currently playing
-            self.app.sounds["Open"].stop()
+    def start_click(self, play_button):
+        self.selected_but = False
+        self.pressed_down = False
+        if play_button == self.pressed_but:
+            play_button.color = self.text_col_norm 
+            self.app.game.start_game(play_button)  
+            if self.app.sounds["Open"].status != 'stop':       #stops start game sound if its currently playing
+                self.app.sounds["Open"].stop()
+            self.dismiss()    
     
     #when button is clicked text becomes translucent        
-    def press_down(self, play_text):
+    def press_down(self, play_button):
+        if play_button.color == self.text_col_pres:        #If the clicked mole is already the selected one
+            self.selected_but = True
         self.pressed_down = True
-        play_text.color = self.text_col_pres
+        self.pressed_but = play_button
+        play_button.color = self.text_col_pres
     
     #when touch moves off text, text returns to normal color    
-    def press_release(self, play_text):
-        if self.pressed_down:               #only runs if button was pressed in the first place
+    def touch_moved(self, play_button):
+        if self.selected_but and self.pressed_down:                          
+            pass
+        elif self.pressed_down:
             self.pressed_down = False
-            play_text.color = self.text_col_norm   
+            self.pressed_but.color = self.text_col_norm  
                         
 class DataBar(Widget):
     game = ObjectProperty(None)
     
     'Game length'
     game_time = NumericProperty(20)  #has to be one below whole number, why?
+    'Endless mode increase in time when mole is hit'
+    endless_time_bonus = NumericProperty(0.2)
     
     score_label = NumericProperty(0)     
     high_score_label = NumericProperty(0)  
@@ -255,14 +272,16 @@ class DataBar(Widget):
                
     def score(self):  
         self.score_label += 1  
+        if self.game.endless_mode:
+            self.time_label += self.endless_time_bonus
     
-    def time(self, dt):
-        cond1 = self.game.playing_label
-        cond2 = self.time_label < self.game_time
-        if cond1 and cond2:
-            self.time_label += 0.05    #something fishy going on with timing....this is a slap up fix
-        elif cond1:
-            self.game.end_game()  
+    #does the game timer countdown
+    def time_mode(self, dt):
+        self.time_label = round(self.time_label - 0.05, 2)          #something fishy going on with timing....this is a slap up fix
+        cond1 = self.time_label <= 0
+        if cond1:
+            self.time_label = 0     #otherwise some long small number shows up
+            self.game.end_game()    
             
     #Changes the high score if the current score is higher than the old high score    
     def new_high_score(self):
@@ -272,10 +291,11 @@ class DataBar(Widget):
     #Runs when startpopup comes up        
     def end(self):
         self.score_label = 0
-        self.time_label = 0                       
+        self.time_label = self.game_time                      
                                                    
 class Mole(Widget):
     game = ObjectProperty(None)
+    icons = ListProperty([])
     
     'Mole width'
     mole_width = NumericProperty(50)
@@ -285,17 +305,40 @@ class Mole(Widget):
     wall_gap = NumericProperty(1.2)  #Needs to be a percentage to times the width/height of mole by    
     'extra distance at bottom from wall, to avoid accidental tapping of home keys'
     bottom_dist = NumericProperty(1.5)
+    'time icon'
+    time_icon = 'Images/time_icon.png'
+    'the time a icon is displayed for'
+    icon_display_time = NumericProperty(0.4)
     
     current_char = StringProperty()
     
     #Detection of touch on mole
     def on_touch_down(self, touch):
         cond1 = self.collide_point(*touch.pos)
-        cond2 = self.game.playing_label
-        if cond1 and cond2:
+        if cond1:
+            self.add_time_icon(touch)
             self.sound()
             self.move()
             self.game.databar.score()  
+    
+    
+    #Adds an icon each time mole is hit giving the time you've gained
+    def add_time_icon(self, touch):   
+        if self.game.endless_mode:
+            icon = Label(font_name = 'Fonts/PressStart2P.ttf',
+                         bold = True,
+                         font_size = '12sp',
+                         text = '+0.2s',
+                         center_x = touch.x,
+                         center_y = touch.y)   
+            self.game.add_widget(icon)
+            self.icons = self.icons + [icon]  
+            Clock.schedule_once(self.remove_time_icon, self.icon_display_time)
+    
+    #Removes icon 
+    def remove_time_icon(self, dt):   
+        self.game.remove_widget(self.icons[0])
+        self.icons = self.icons[1:]
     
     #Sound to play when mole is tapped
     def sound(self):
@@ -333,17 +376,31 @@ class MoleGame(Widget):
     'Seconds times_up pop up is visible for'  
     timesup_time = NumericProperty(2.5)    #needs to be more than the win/lose soud time length
     
-    playing_label = BooleanProperty(False)  
+    classic_mode = BooleanProperty(False)
+    endless_mode = BooleanProperty(False)  
     
-    def start_game(self):
-        self.playing_label = True
+    #Checks which game mode has been selected
+    #The only functions effected by the game mode are:
+    #The time/high score funciton in the databar
+    #The on_touch_down function in mole
+    def game_mode(self, play_button):
+        cond1 = play_button.text == 'Classic'
+        cond2 = play_button.text == 'Endless'
+        if cond1:
+            self.classic_mode = True
+        elif cond2:
+            self.endless_mode = True    
+    
+    def start_game(self, play_button):
+        self.game_mode(play_button)
         self.app.sounds["Play"].play()
-        Clock.schedule_interval(self.databar.time, 0.1) 
+        Clock.schedule_interval(self.databar.time_mode, 0.1) 
         
     def end_game(self):
         self.mole.end()
-        Clock.unschedule(self.databar.time)
-        self.playing_label = False
+        Clock.unschedule(self.databar.time_mode)
+        self.endless_mode = False
+        self.classic_mode = False
         self.databar.new_high_score()
         self.app.times_up()
         Clock.schedule_once(self.app.start_popup_scrn, self.timesup_time)     
@@ -376,6 +433,7 @@ class MoleHuntApp(App):
     #Runs after the build has been made 
     def on_start(self):
         self.start_popup_scrn()
+        self.game.databar.time_label = self.game.databar.game_time
     
     #Reads high score data
     def read_save(self):

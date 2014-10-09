@@ -25,7 +25,7 @@
 	bold: True      
 	font_size: '9sp'	
 
-##popup game description text	
+##popup game description text, credit text
 <GeneralText@Label> 
 	font_name: 'Fonts/PressStart2P.ttf' 
 	text_size: self.size
@@ -33,8 +33,22 @@
 	halign: 'center'
 	bold: True      
 	font_size: '8sp'
+	
+##Game mode selection buttons
+<GameModeButton@Button>	
+	background_color: 0, 0, 0, 0
+	size_hint: 0.5, 0.9
+	font_name: 'Fonts/PressStart2P.ttf'
+	font_size: sp(15)
+	color: 1, 0.5, 0.5, 1
+    on_touch_down: 
+    	if self.collide_point(*args[1].pos): app.startpopup.press_down(self)
+    on_touch_move: 													
+    	if self.collide_point(*args[1].pos): pass     #if touch moves off play button highlighting goes away
+    	else: app.startpopup.touch_moved(self)	
+    #on_touch_up is below the actual button as they both start different game modes	
 
-###Character selection class
+##Character selection class
 #Having this template gives button behaviour to Image
 #Allowing the on_press event to function	
 <Character@ButtonBehavior+Image>
@@ -165,35 +179,31 @@
 				CharSelect:
 					id: charselect_obj
 			
-			###Button
-			AnchorLayout:
+			###Game mode buttons
+			BoxLayout:
 				size_hint: 1, 0.5
-				anchor_x: 'center'
-				anchor_y: 'center'	
-			    Button:
-			    	background_color: 0, 0, 0, 0
-			    	size_hint: 0.5, 0.9
-			    	font_name: 'Fonts/PressStart2P.ttf'
-			    	font_size: sp(25)
-			    	color: root.text_col_norm
-			        text: 'Play'
-			        on_touch_down: 
-			        	if self.collide_point(*args[1].pos): root.press_down(self)
-			        on_touch_move: 													
-			        	if self.collide_point(*args[1].pos): pass     #if touch moves off play button highlighting goes away
-			        	else: root.press_release(self)	
-			        on_touch_up: 
-			        	root.press_release
-			        	cond1 = self.collide_point(*args[1].pos)  #code only runs if touch up is inside play button
-			        	cond2 = root.pressed_down                 #code only runs if there was a touch down on the play button 
-						if cond1 and cond2: root.start_click() 
-			        	if cond1 and cond2: root.dismiss() 	  
+				orientation: 'horizontal'	
+			    GameModeButton:
+			    	text: 'Classic'
+			    	on_touch_up: 
+				    	cond1 = self.collide_point(*args[1].pos)  #code only runs if touch up is inside play button
+						if cond1: root.start_click(self) 
+			    GameModeButton:
+			    	text: 'Endless'	
+			    	on_touch_up: 
+				    	cond1 = self.collide_point(*args[1].pos)  #code only runs if touch up is inside play button
+						if cond1: root.start_click(self)    
 			        
 		###Achievements board
 		RelativeLayout:
 			size_hint: 1, 0.25
 			Achievements: 
 				id: achievements_obj
+				
+		###Game studio credit		
+		GeneralText:
+			size_hint: 1, 0.125
+			text: 'Boundless Productions'
  
 <DataBar>
 	game: app.game
