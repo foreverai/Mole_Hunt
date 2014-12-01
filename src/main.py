@@ -1,13 +1,10 @@
 '''
 Added
--add a line saying 'Boundless Productions'
--Added second gamemode button, and changed press logic to be the same as that from the character selection
--Added endless game mode logic
--Added 0.2s graphic
 
 To Do
--Fix touch registering anywhere
--add a restart button on the game screen
+-add a restart button on the game screen (add using back key on android (see ocean drops for how to do this))
+-move high scores to beneath game mode buttons
+-in place of the current high score on main menu put a mole peeking over
 -Add game services
 -Add connection to rate app/leaderboard on main screen
 
@@ -34,7 +31,7 @@ Widget tree
   
 '''
 
-__version__ = '1.1.4'
+__version__ = '1.1.5'
 
 import kivy
 kivy.require('1.8.0')
